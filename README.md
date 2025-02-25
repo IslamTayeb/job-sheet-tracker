@@ -1,60 +1,120 @@
 # Job Sheet Tracker
-A command-line interface (CLI) tool designed to automatically update a Google Sheet with details from the latest job applications received via Gmail.  This simplifies the process of tracking applications, eliminating manual data entry.
+
+A command-line interface (CLI) tool designed to automatically update a Google Sheet with details from the latest job applications received via Gmail. This simplifies the process of tracking applications, eliminating manual data entry.
 
 ## Features
+
 * **Gmail Integration:** Connects to your Gmail account to retrieve the latest emails.
-* **Email Parsing:** Extracts key information from emails, including subject, sender, date, and email body (truncated to 50,000 characters).
-* **Google Sheets Integration:** Appends extracted email data to a specified Google Sheet.
-* **CLI Usage:**  A simple and user-friendly command-line interface for easy interaction.
-* **Configuration via Environment Variables:**  Uses environment variables to store sensitive information like Google Sheet ID and avoids hardcoding credentials directly in the script.
-
-## TODO #022225
-- [ ] Integrate with Yihong's internship application tracker.
-- [ ] Implement self-updating functionality for roles (automatically update status if the same role and company are detected).
-- [ ] Improve email filtering to accurately identify job applications among other emails (so you can parse them daily later on and fully automate the process).
-- [ ] Make it an actual global CLI.
-
-## Usage
-1. **Set up Environment Variables:** Create a `.env` file in the root directory and set the following environment variables:
-    * `GOOGLE_SHEETS_ID`: Your Google Sheet's ID.  You can find this in the URL of your Google Sheet.
-    * `GOOGLE_APPLICATION_CREDENTIALS`: Path to your credentials.json file (downloaded from Google Cloud Platform).
-
-2. **Run the script:** Execute the script using the following command, replacing `<number>` with the desired number of latest emails to process:
-
-```bash
-python code/script.py --number <number>
-```
-
-For example, to process the 10 latest emails:
-
-```bash
-python code/script.py --number 10
-```
+* **AI-powered Parsing:** Uses Google's Gemini AI to extract job information like position, company, and application status.
+* **Google Sheets Integration:** Appends extracted job data to a specified Google Sheet.
+* **CLI Interface:** Simple command-line interface with configuration options.
+* **Global Installation:** Can be installed as a global pip package for easy access.
 
 ## Installation
-1. **Clone the repository:**
+
+### Option 1: Install from GitHub
+
 ```bash
-git clone https://github.com/IslamTayeb/job-sheet-tracker.git
+pip install git+https://github.com/IslamTayeb/job-sheet-tracker.git
 ```
 
-2. **Set up Google Cloud Credentials:**
-    * Create a new project in the Google Cloud Console.
-    * Enable the Gmail API and Google Sheets API.
-    * Create OAuth 2.0 client ID credentials (downloaded as `credentials.json`).
-    * Place `credentials.json` in the root directory of this project
+### Option 2: Manual Installation
 
-## Technologies Used
-* **Python:** The primary programming language for the script.
-* **Google API Client Library for Python:** Used for interacting with the Gmail and Google Sheets APIs.
-* **google-auth-oauthlib:**  Handles authentication with Google services.
-* **google-auth-httplib2:** Provides HTTP client for Google APIs
-* **googleapiclient:**  A client library for accessing Google APIs.
-* **argparse:** For parsing command-line arguments.
-* **dotenv:**  For loading environment variables from a `.env` file.
-* **pickle:** For securely storing authentication tokens locally.
+```bash
+git clone https://github.com/IslamTayeb/job-sheet-tracker.git
+cd job-sheet-tracker
+pip install -e .
+```
 
+After installation, the `track` command will be available globally in your terminal.
+
+## Initial Setup
+
+Before using the tool, you need to configure it with your Gemini API key, Google Sheets ID, and Google API credentials:
+
+1. **Get a Gemini API key:**
+   - Visit [Google AI Studio](https://makersuite.google.com/app/apikey) to create a Gemini API key.
+
+2. **Create a Google API Credentials file:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project
+   - Enable the Gmail API and Google Sheets API
+   - Create OAuth 2.0 client ID credentials (download as `credentials.json`)
+
+3. **Set up a Google Sheet to store your job applications:**
+   - Create a new Google Sheet
+   - Note the Sheet ID from its URL (the long string between /d/ and /edit in the URL)
+   - Make sure the sheet has headers in row 1
+
+4. **Configure the tool:**
+
+```bash
+# Set your Gemini API key
+track config --gemini-api-key YOUR_API_KEY
+
+# Set your Google Sheets ID
+track config --sheets-id YOUR_SHEET_ID
+
+# Set your Google API credentials (choose one method)
+track config --credentials path/to/your/credentials.json
+# OR
+track config --credentials-input  # Paste credentials interactively
+```
+
+## Usage
+
+### Process emails to find job applications
+
+```bash
+# Process the 10 latest emails
+track process 10
+```
+
+For backward compatibility, you can also simply use:
+
+```bash
+track 10
+```
+
+### View or update configuration
+
+```bash
+# View current configuration
+track config
+
+# Update Gemini API key
+track config --gemini-api-key YOUR_NEW_API_KEY
+
+# Update Google Sheets ID
+track config --sheets-id YOUR_NEW_SHEET_ID
+```
+
+## Google Sheet Format
+
+The tool expects a Google Sheet with the following columns:
+1. **Date** - When the application was submitted/processed
+2. **Position** - Job title or position
+3. **Company** - Company name
+4. **Status** - Application status (0=Rejected, 1=Applied, 2=Assessment, 3=Interview)
+
+## Job Status Codes
+
+The tool uses the following status codes in the Google Sheet:
+- **0**: Rejected
+- **1**: Applied
+- **2**: Assessment/Screening
+- **3**: Interview
+
+## Troubleshooting
+
+- **Authentication Issues**: If you encounter authentication problems, delete the token files in `~/.jobtrack/` and run the tool again.
+- **Missing Information**: If the tool cannot extract job information from emails, it will prompt you to enter it manually.
+- **Configuration Errors**: Run `track config` to verify your current configuration.
 
 ## Contributing
+
 Contributions are welcome! Please open an issue or submit a pull request.
 
-*README.md was made with [Etchr](https://etchr.dev)*
+## License
+
+MIT
