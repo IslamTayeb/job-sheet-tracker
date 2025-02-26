@@ -477,14 +477,23 @@ def config_command(args):
 
     # Save credentials if provided
     if args.credentials:
+        # Check if the input is a file path or a JSON string
         if os.path.exists(args.credentials):
+            # It's a file path
             with open(args.credentials, "r") as f:
                 creds_content = f.read()
             save_credentials(creds_content)
             print(f"Google API credentials updated from {args.credentials}.")
         else:
-            print(f"Error: Credentials file {args.credentials} not found.")
-            sys.exit(1)
+            # Treat as direct JSON content
+            try:
+                # Validate it's proper JSON
+                json.loads(args.credentials)
+                save_credentials(args.credentials)
+                print("Google API credentials updated.")
+            except json.JSONDecodeError:
+                print("Error: Invalid JSON format. Credentials not updated.")
+                sys.exit(1)
 
     # Handle interactive credentials input
     if args.credentials_input:
@@ -542,7 +551,8 @@ def main_cli():
     config_parser.add_argument("--gemini-api-key", help="Set your Gemini API key")
     config_parser.add_argument("--sheets-id", help="Set your Google Sheets ID")
     config_parser.add_argument(
-        "--credentials", help="Path to your Google API credentials.json file"
+        "--credentials",
+        help="Google API credentials (either as a JSON string or path to credentials.json file)",
     )
     config_parser.add_argument(
         "--credentials-input",
