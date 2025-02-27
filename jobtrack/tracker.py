@@ -1,4 +1,3 @@
-import io
 import os
 import sys
 import argparse
@@ -19,7 +18,6 @@ import socket
 import ssl
 import logging
 
-
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -27,14 +25,9 @@ logger = logging.getLogger("jobtrack")
 
 logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
 logging.getLogger("googleapiclient.discovery").setLevel(logging.WARNING)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ['GRPC_VERBOSITY'] = 'ERROR'
-os.environ['GRPC_TRACE'] = 'none'
-os.environ['GRPC_ENABLE_FORK_SUPPORT'] = '0'
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 warnings.filterwarnings("ignore", message=".*file_cache is only supported.*")
-stderr_backup = sys.stderr
-sys.stderr = io.StringIO()
-sys.stderr = stderr_backup
+
 
 # Constants
 GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
