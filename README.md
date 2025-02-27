@@ -5,7 +5,7 @@ A command-line interface (CLI) tool designed to automatically update a Google Sh
 <img src="https://github.com/IslamTayeb/job-sheet-tracker/blob/main/jobtrack/public/image-1740688549700.png?raw=true" alt="image-1740688549700.png" />
 </div>
 
-![Demo Video](https://youtu.be/2NeEOVF-ZoU)
+[![Demo Video](https://img.youtube.com/vi/2NeEOVF-ZoU/0.jpg)](https://youtu.be/2NeEOVF-ZoU)
 
 
 ## Features
