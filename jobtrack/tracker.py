@@ -455,9 +455,8 @@ def process_emails(num_emails):
 
         time.sleep(API_RETRY_DELAY)
 
-    print(
-        f"Processing complete. View your Google Sheet: https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit"
-    )
+    sheet_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit"
+    print(f"Processing complete. View your Google Sheet: \033[4m{sheet_url}\033[0m")
 
 
 def config_command(args):
