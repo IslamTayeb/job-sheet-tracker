@@ -5,6 +5,8 @@ A command-line interface (CLI) tool designed to automatically update a Google Sh
 <img src="https://github.com/IslamTayeb/job-sheet-tracker/blob/main/jobtrack/public/image-1740688549700.png?raw=true" alt="image-1740688549700.png" />
 </div>
 
+![Demo Video](https://github.com/IslamTayeb/job-sheet-tracker/blob/main/jobtrack/public/Demo-Video.mp4)
+
 ## Features
 * **Gmail Integration:** Connects to your Gmail account to retrieve the latest emails.
 * **AI-powered Parsing:** Uses Google's Gemini AI to extract job information like position, company, and application status.
