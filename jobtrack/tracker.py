@@ -564,7 +564,7 @@ def main_cli():
     args = parser.parse_args()
 
     # Handle different commands
-    if args.command == "process":
+    if args.command == "":
         if args.number <= 0:
             print("Number of emails must be positive")
             sys.exit(1)
