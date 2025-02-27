@@ -301,6 +301,7 @@ Body: {body}"""
             "position": job_info["position"],
             "company": job_info["company"],
             "status": job_info.get("status", 1),
+            "subject": subject
         }
     except Exception as e:
         logger.error(f"Error processing email: {str(e)}")
@@ -411,8 +412,8 @@ def process_emails(num_emails):
 
     for i, msg in enumerate(messages):
         try:
-            print(f"Processing email {i + 1}/{len(messages)}...")
             email_data = get_email_content(gmail_service, msg["id"])
+            print(f"Processing email {i+1}/{len(messages)}: {email_data['subject']}")
 
             if (
                 email_data["position"] == "UNKNOWN"
