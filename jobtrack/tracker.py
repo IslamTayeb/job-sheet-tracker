@@ -4,7 +4,6 @@ import argparse
 import json
 import logging
 import google.generativeai as genai
-from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -30,7 +29,6 @@ CREDS_FILE = os.path.join(CONFIG_DIR, "credentials.json")
 GMAIL_TOKEN_FILE = os.path.join(CONFIG_DIR, "gmail_token.pickle")
 SHEETS_TOKEN_FILE = os.path.join(CONFIG_DIR, "sheets_token.pickle")
 
-# Setup logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -46,10 +44,8 @@ def load_config():
     """Load configuration from config file"""
     ensure_config_dir()
 
-    # Load from env file first (for backward compatibility)
     load_dotenv()
 
-    # Default config
     config = {
         "gemini_api_key": os.getenv("GEMINI_API_KEY", ""),
         "google_sheets_id": os.getenv("GOOGLE_SHEETS_ID", ""),
@@ -297,7 +293,7 @@ Body: {body}"""
             "date": formatted_date,
             "position": job_info["position"],
             "company": job_info["company"],
-            "status": job_info.get("status", 1),  # Default to 1 if status is missing
+            "status": job_info.get("status", 1),
         }
     except Exception as e:
         logger.error(f"Error processing email: {str(e)}")
@@ -307,7 +303,7 @@ Body: {body}"""
             ),
             "position": "UNKNOWN",
             "company": "UNKNOWN",
-            "status": 1,  # Default to application status
+            "status": 1,
         }
 
 
@@ -326,7 +322,7 @@ def get_existing_entries(sheets_service, spreadsheet_id):
         if "values" in result:
             for row in result.get("values", []):
                 if len(row) >= 2:
-                    existing.add(f"{row[0]}_{row[1]}")  # Position_Company
+                    existing.add(f"{row[0]}_{row[1]}")
         return existing
     except Exception as e:
         logger.error(f"Error getting existing entries: {str(e)}")
@@ -339,8 +335,8 @@ def append_to_sheets(service, spreadsheet_id, email_data):
     values = [
         [
             email_data["date"],
-            email_data["position"],  # Position first
-            email_data["company"],  # Company second
+            email_data["position"],
+            email_data["company"],
             email_data["status"],
         ]
     ]
@@ -411,7 +407,6 @@ def process_emails(num_emails):
             print(f"Processing email {i + 1}/{len(messages)}...")
             email_data = get_email_content(gmail_service, msg["id"])
 
-            # If both fields are unknown, skip this email
             if (
                 email_data["position"] == "UNKNOWN"
                 and email_data["company"] == "UNKNOWN"
@@ -419,13 +414,11 @@ def process_emails(num_emails):
                 print("⚠️ Unable to extract info from email")
                 continue
 
-            # If one field is unknown, prompt for manual input
             if (
                 email_data["position"] == "UNKNOWN"
                 or email_data["company"] == "UNKNOWN"
             ):
                 email_data = prompt_for_missing_info(email_data)
-                # After prompting, check if we still have an unknown field
                 if (
                     email_data["position"] == "UNKNOWN"
                     or email_data["company"] == "UNKNOWN"
@@ -443,7 +436,6 @@ def process_emails(num_emails):
             existing_entries.add(entry_key)
             append_to_sheets(sheets_service, spreadsheet_id, email_data)
 
-            # Status code display mapping for console output only
             status_map = {0: "Rejected", 1: "Applied", 2: "Assessment", 3: "Interview"}
             status_text = status_map.get(email_data["status"], "Unknown")
 
@@ -463,19 +455,16 @@ def config_command(args):
     """Handle configuration command"""
     config = load_config()
 
-    # Save API key if provided
     if args.gemini_api_key:
         config["gemini_api_key"] = args.gemini_api_key
         save_config(config)
         print(f"Gemini API key updated.")
 
-    # Save Sheets ID if provided
     if args.sheets_id:
         config["google_sheets_id"] = args.sheets_id
         save_config(config)
         print(f"Google Sheets ID updated.")
 
-    # Save credentials if provided
     if args.credentials:
         # Check if the input is a file path or a JSON string
         if os.path.exists(args.credentials):
@@ -485,9 +474,7 @@ def config_command(args):
             save_credentials(creds_content)
             print(f"Google API credentials updated from {args.credentials}.")
         else:
-            # Treat as direct JSON content
             try:
-                # Validate it's proper JSON
                 json.loads(args.credentials)
                 save_credentials(args.credentials)
                 print("Google API credentials updated.")
@@ -495,7 +482,6 @@ def config_command(args):
                 print("Error: Invalid JSON format. Credentials not updated.")
                 sys.exit(1)
 
-    # Handle interactive credentials input
     if args.credentials_input:
         print("Please paste your Google API credentials JSON content:")
         print("(Press Ctrl+D when finished)")
@@ -517,7 +503,6 @@ def config_command(args):
             print("Error: Invalid JSON format. Credentials not updated.")
             sys.exit(1)
 
-    # Show current config if no arguments were provided
     if not (
         args.gemini_api_key
         or args.sheets_id
@@ -534,13 +519,19 @@ def config_command(args):
 
 
 def main_cli():
-    """Enhanced CLI entry point"""
+    if len(sys.argv) == 2 and sys.argv[1].isdigit():
+        num_emails = int(sys.argv[1])
+        if num_emails <= 0:
+            print("Number of emails must be positive")
+            sys.exit(1)
+        process_emails(num_emails)
+        return
+
     parser = argparse.ArgumentParser(description="Job Application Tracker")
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
-    # Process emails command
     process_parser = subparsers.add_parser(
-        "", help="Process emails to find job applications"
+        "process", help="Process emails to find job applications"
     )
     process_parser.add_argument(
         "number", type=int, help="Number of latest emails to process"
@@ -560,11 +551,10 @@ def main_cli():
         help="Input Google API credentials interactively",
     )
 
-    # Parse arguments
     args = parser.parse_args()
 
     # Handle different commands
-    if args.command == "":
+    if args.command == "process":
         if args.number <= 0:
             print("Number of emails must be positive")
             sys.exit(1)
@@ -572,19 +562,10 @@ def main_cli():
     elif args.command == "config":
         config_command(args)
     else:
-        # Default behavior for backward compatibility
-        if len(sys.argv) == 2 and sys.argv[1].isdigit():
-            num_emails = int(sys.argv[1])
-            if num_emails <= 0:
-                print("Number of emails must be positive")
-                sys.exit(1)
-            process_emails(num_emails)
-        else:
-            parser.print_help()
+        parser.print_help()
 
 
 def main():
-    """Original argparse entry point for backward compatibility"""
     parser = argparse.ArgumentParser(
         description="Process Gmail emails to Google Sheets"
     )
