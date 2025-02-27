@@ -540,7 +540,7 @@ def main_cli():
 
     # Process emails command
     process_parser = subparsers.add_parser(
-        "process", help="Process emails to find job applications"
+        "", help="Process emails to find job applications"
     )
     process_parser.add_argument(
         "number", type=int, help="Number of latest emails to process"
