@@ -126,7 +126,7 @@ def setup_gemini():
 
     genai.configure(api_key=api_key)
     generation_config = {
-        "temperature": 0.15,
+        "temperature": 0.25,
         "top_p": 0.95,
         "top_k": 40,
         "max_output_tokens": 8192,
@@ -197,17 +197,144 @@ def extract_job_info_with_retry(model, email_content):
 
 If you can't determine the position or company, return "UNKNOWN" for the missing field.
 
-If there's more than 1 mention of companies and one is a subsidiary of the other, put the parent company first then in square brackets put the subsidiary after the parent company.
+For company names:
+- If there's more than 1 mention of companies and one is a subsidiary of the other, put the parent company first then in square brackets put the subsidiary after the parent company, like "Parent [Subsidiary]"
+- If you see multiple companies and can't determine the relationship, choose the one most likely to be the actual employer
+- Pay attention to email domains (company@example.com) as they often reveal the real company name
+- Strip out any "talent acquisition" or "hiring" service names that aren't the actual employer
 
 Put status as:
-- 0 if it's a rejection email
-- 1 if I've just applied
-- 2 if it's an online assessment, hirevue, or general screening survey
-- 3 if it's an interview
+- 0 if it's a rejection email (looking for phrases like "moving forward with other candidates", "not selected", "unfortunately")
+- 1 if I've just applied or received an application confirmation
+- 2 if it's an online assessment, hirevue, coding challenge, or general screening survey
+- 3 if it's an interview invitation or interview confirmation
 
 Format the response as JSON with these exact keys: "position", "company", and "status" inside a code block.
 
 Ignore any irrelevant emails, promotional emails, or emails that don't contain job information. Make sure to ignore any email that isn't a job application or interview confirmation, even if those may contain JUST companies (e.g. New York Times or Medium articles that are ABOUT the job market or tech that aren't an actual job application).
+
+Examples:
+<Example 1>
+Email content:
+
+Islam -
+
+We think it's awesome that you chose to apply with us.  As you know, T-Mobile is changing the wireless industry for good.  And that means we're always listening to find out how we can do better.
+
+Will you help us by taking a short survey to tell us about your experience applying for job requisition (REQ293888)? Your responses will have no impact on your candidacy.
+
+
+ACCESSING THE SURVEY
+If clicking on the link does not take you directly to the survey, please copy and paste the url into the address bar of your internet browser.
+START THE SURVEY
+
+
+
+NEED HELP?
+
+For technical help while completing this survey, please visit our Support page.
+
+
+Please click the link below if you would like to opt out of receiving further communications about this requisition ID:
+Opt out
+</Example 1>
+<Analaysis 1>
+This doesn't count as an application, it's a survey. The position is "UNKNOWN" and the company is "UNKNOWN" and is ultimately ignored because it's not a job/internship application even if it's associated with T-Mobile.
+</Analysis 1>
+
+<Example 2>
+Subject:Point72 Employment Application - thanks!
+From: talent@cubistsystematic.com
+Body: Hi Islam,
+
+Thanks for submitting your application for Quantitative Research Intern and your interest in the firm.
+
+Our team will review your application and we will be in touch if your skills and experience are a good fit for this or any other roles that are currently open.
+</Example 2>
+<Analysis 2>
+This should come up with the position "Quantitative Research Intern" and the company "Point72" and the status should be 1 because it's an application. You'll notice that the email contains the company name in the subject and the position in the body. Notice how the company name may be in places other than the body, and how sometimes you'll have a company like "cubistsystematic" that has nothing to do with the application but is simply the provider for the team's talent acquisition team and nothing else - you can ignore that.
+</Analysis 2>
+
+<Example 3>
+Subject: Success! We've received your application
+From: "HERE @ icims" <here+autoreply@talent.icims.com>
+Body: Hi Islam,
+
+Great news! We've received your application for the Software Engineer Intern 2025-75486
+position. We could not be more excited that you are considering HERE Technologies as your destination and sincerely respect the time it took you to apply.
+
+Although this is an automated response, we will carefully review your resume and qualifications as they relate to the role(s) you applied for. While sometimes we can find ourselves buried in resumes, you will receive an update from a real person within a week. After all, we've all been in the position of waiting to hear back from someone.
+
+As we begin to learn more about you and your story, please don't hesitate to dive deeper into ours! HERE360 will keep you up to date, our YouTube channel shows you what we're all about, and our Careers site highlights our culture of innovation and commitment to inclusion and diversity.
+
+Thank you very much for your interest in joining our team at HERE Technologies.
+
+
+The HERE Talent Acquisition Team
+Make HERE your destination, we are just getting started.
+
+This message was sent to islam.moh.islamm@gmail.com. If you don't want to receive these emails from this company in the future, please go to:
+https://here.icims.com/icims2/?r=4F8F486628&contactId=2786387&pid=17
+
+© HERE International B.V.; PO Box 1300; Eindhoven, (Netherlands) 5602 BH; NLD
+
+CONFIDENTIALITY NOTICE This e-mail and any attachments hereto may contain information that is privileged or confidential, and is intended for use only by the individual or entity to which it is addressed. Any disclosure, copying or distribution of the information by anyone else is strictly prohibited. If you have received this document in error, please notify us promptly by responding to this e-mail. Thank you.
+</Example 3>
+<Analysis 3>
+This is fairly standard. The position is "Software Engineer Intern 2025-75486" and the company is "HERE Technologies". The status is 1 because it's an application.
+</Analysis 3>
+
+<Example 4>
+asco@myworkday.com
+Verify your candidate account
+ASCO_header_email.png
+Click this link to confirm your email address and complete setup for your candidate account
+https://asco.wd5.myworkdayjobs.com/ASCO/activate/gszywz3n2w34ylmws5xqjlwsr2c2xkiwukmo2fhicllln7bjiv9sh2r1q0o81zinr6ynfb54a7jxl2gqd3fbagl22h1scad3sd/?redirect=%2Fen-US%2FASCO%2Fjob%2FAlexandria%252C-VA%2FData-Engineer-Intern_R964-1%2Fapply%2FautofillWithResume
+The link will expire after 24 hours.
+</Example 4>
+<Analysis 4>
+This should be totally ignored. It's a verification email for a candidate account and not an application. The position is "UNKNOWN" and the company is "UNKNOWN" and the status is 1 because it's not an application.
+</Analysis 4>
+
+<Example 5>
+no-reply-recruiting@sofi.org
+Islam, an update on your SoFi Intern, Credit Risk Analytics application
+Hi Islam,
+
+Thank you for applying for the Intern, Credit Risk Analytics position at SoFi! We're changing the way people think about and interact with personal finance, and we are grateful for your interest in being a part of this journey.
+
+At this time, we have decided to move forward with other candidates whose skill set and experience more closely align with what we're looking for in this role. We wish you the best of luck in your job search!
+
+All the best,
+
+The SoFi Recruiting Team
+
+**Please note: Do not reply to this email. This email is sent from an unattended mailbox and replies will not be read.
+</Example 5>
+<Analysis 5>
+This is a rejection email. The position is "Intern, Credit Risk Analytics" and the company is "SoFi". The status is 0 because it's a rejection.
+</Analysis 5>
+
+<Example 6>
+Thank you for your application for Summer 2025 Data Engineer Intern – ORBIT 2506236580W
+
+Thank you for applying for Summer 2025 Data Engineer Intern – ORBIT (2506236580W) at Janssen Research & Development, LLC.  We have successfully received your application.  We appreciate your interest in joining us.  When you join Johnson & Johnson, your next move could mean our next breakthrough.
+
+Best Regards,
+THE JOHNSON & JOHNSON TALENT ACQUISITION TEAM
+
+Log in to Shine and access real-time updates and resources to keep you informed and prepared for each step along the way.
+Visit jobs.jnj.com
+   © 2019 Johnson & Johnson Services, Inc.
+
+Please note: Privacy Policy & Legal Notice
+Please do not reply to this message. Replies are undeliverable and will not reach the Human Resources Department.
+Confidentiality Notice: This e-mail transmission may contain confidential or legally privileged information that is intended only for the individual or entity named in the e-mail address. If you are not the intended recipient, you are hereby notified that any disclosure, copying, distribution, or reliance upon the contents of this e-mail is strictly prohibited. If you have received this e-mail transmission in error, please delete the message from your Inbox. Thank you.
+
+</Example 6>
+<Analysis 6>
+This is an application. The position is "Summer 2025 Data Engineer Intern – ORBIT (2506236580W)" and the company is "Johnson & Johnson [Janssen Research & Development, LLC]". The status is 1 because it's an application. Notice the subsidiary in square brackets since the parent company is Johnson & Johnson, which can be inferred b.
+</Analysis 6>
 
 Email content:
 {email_content}"""
@@ -316,6 +443,7 @@ Body: {body}"""
             "company": job_info["company"],
             "status": job_info.get("status", 1),
             "subject": subject,
+            "full_content": email_content,
         }
     except Exception as e:
         logger.error(f"Error processing email: {str(e)}")
@@ -326,6 +454,7 @@ Body: {body}"""
             "position": "UNKNOWN",
             "company": "UNKNOWN",
             "status": 1,
+            "full_content": "",
         }
 
 
@@ -381,6 +510,12 @@ def prompt_for_missing_info(email_data):
     print(f"Partial info detected:")
     print(f"Position: {email_data['position']}")
     print(f"Company: {email_data['company']}")
+
+    # Display full email content to help user determine missing information
+    if "full_content" in email_data and email_data["full_content"]:
+        print("\n--- EMAIL CONTENT ---")
+        print(email_data["full_content"])
+        print("--- END EMAIL CONTENT ---\n")
 
     if email_data["position"] == "UNKNOWN":
         user_input = input("Enter position (or 'n' to skip): ")
