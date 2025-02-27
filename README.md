@@ -26,7 +26,13 @@ cd job-sheet-tracker
 pip install -e .
 ```
 
-After installation, the `track` command will be available globally in your terminal.
+After installation, the `track` command will be available globally in your terminal. Sometimes if you use pyenv or other python version manager, you'd require to alias it from a custom environment:
+
+```bash
+# After installing it into a venv:
+echo 'alias track="~/.pyenv/versions/INSERT-VENV-NAME/bin/track"' >> ~/.zshrc
+source ~/.zshrc
+```
 
 ## Initial Setup
 
