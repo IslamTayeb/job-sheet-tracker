@@ -1,11 +1,9 @@
 # Job Sheet Tracker
 A command-line interface (CLI) tool designed to automatically update a Google Sheet with details from the latest job applications received via Gmail. This simplifies the process of tracking applications, eliminating manual data entry.
 
-
 <div align="center">
-<img src="https://github.com/IslamTayeb/job-sheet-tracker/blob/main/jobtrack/public/image-1740688182391.png?raw=true" alt="image-1740688182391.png" />
+<img src="https://github.com/IslamTayeb/job-sheet-tracker/blob/main/jobtrack/public/image-1740688549700.png?raw=true" alt="image-1740688549700.png" />
 </div>
-
 
 ## Features
 * **Gmail Integration:** Connects to your Gmail account to retrieve the latest emails.
