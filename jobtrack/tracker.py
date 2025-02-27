@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 import json
-import logging
+import warnings
 import google.generativeai as genai
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -16,6 +16,18 @@ import pytz
 import time
 import socket
 import ssl
+import logging
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("jobtrack")
+
+logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
+logging.getLogger("googleapiclient.discovery").setLevel(logging.WARNING)
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+warnings.filterwarnings("ignore", message=".*file_cache is only supported.*")
+
 
 # Constants
 GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
@@ -28,11 +40,6 @@ CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
 CREDS_FILE = os.path.join(CONFIG_DIR, "credentials.json")
 GMAIL_TOKEN_FILE = os.path.join(CONFIG_DIR, "gmail_token.pickle")
 SHEETS_TOKEN_FILE = os.path.join(CONFIG_DIR, "sheets_token.pickle")
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger("jobtrack")
 
 
 def ensure_config_dir():
@@ -448,7 +455,9 @@ def process_emails(num_emails):
 
         time.sleep(API_RETRY_DELAY)
 
-    print(f"Processing complete. Check your Google Sheet for updates.")
+    print(
+        f"Processing complete. View your Google Sheet: https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit"
+    )
 
 
 def config_command(args):
