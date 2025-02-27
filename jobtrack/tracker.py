@@ -126,7 +126,7 @@ def setup_gemini():
 
     genai.configure(api_key=api_key)
     generation_config = {
-        "temperature": 0.0,
+        "temperature": 0.15,
         "top_p": 0.95,
         "top_k": 40,
         "max_output_tokens": 8192,
@@ -193,10 +193,24 @@ def extract_job_info_with_retry(model, email_content):
     retries = 0
     while retries < MAX_RETRIES:
         try:
-            prompt = f"""Extract the job position I applied to and company from this email. Include any ID numbers in the position. Otherwise, return "UNKNOWN" for both. If there's more than 1 mention of companies and one is a subsidary of the other, put the parent company first then in square brackets put the subsidary after the parent company. Put status as 0 if it's a rejection email, 1 if I've just applied, 2 if it's an online assessment, hirevue, or general screening survey, and 3 if it's an interview. Format the response as JSON with these exact keys: "position", "company", and "status" inside a code block. Ignore any irrelevant emails, promotional emails, or emails that don't contain job information. Make sure to ignore any email that isn't a job application or interview confirmation, even if those may contain JUST companies (e.g. New York Times or Medium articles that are ABOUT the job market or tech that aren't an actual job application).
+            prompt = f"""Extract the job position I applied to and company from this email. Include any ID numbers in the position. Pay special attention to email signatures, "From" lines, and domain names in email addresses as they often contain company names.
 
-            Email content:
-            {email_content}"""
+If you can't determine the position or company, return "UNKNOWN" for the missing field.
+
+If there's more than 1 mention of companies and one is a subsidiary of the other, put the parent company first then in square brackets put the subsidiary after the parent company.
+
+Put status as:
+- 0 if it's a rejection email
+- 1 if I've just applied
+- 2 if it's an online assessment, hirevue, or general screening survey
+- 3 if it's an interview
+
+Format the response as JSON with these exact keys: "position", "company", and "status" inside a code block.
+
+Ignore any irrelevant emails, promotional emails, or emails that don't contain job information. Make sure to ignore any email that isn't a job application or interview confirmation, even if those may contain JUST companies (e.g. New York Times or Medium articles that are ABOUT the job market or tech that aren't an actual job application).
+
+Email content:
+{email_content}"""
 
             response = model.generate_content(prompt)
             json_str = (
@@ -301,7 +315,7 @@ Body: {body}"""
             "position": job_info["position"],
             "company": job_info["company"],
             "status": job_info.get("status", 1),
-            "subject": subject
+            "subject": subject,
         }
     except Exception as e:
         logger.error(f"Error processing email: {str(e)}")
@@ -413,13 +427,14 @@ def process_emails(num_emails):
     for i, msg in enumerate(messages):
         try:
             email_data = get_email_content(gmail_service, msg["id"])
-            print(f"Processing email {i+1}/{len(messages)}: {email_data['subject']}")
+            print(f"Processing email {i + 1}/{len(messages)}: {email_data['subject']}")
 
             if (
                 email_data["position"] == "UNKNOWN"
                 and email_data["company"] == "UNKNOWN"
             ):
                 print("⚠️ Unable to extract info from email")
+                print()  # Add line break after each email
                 continue
 
             if (
@@ -432,6 +447,7 @@ def process_emails(num_emails):
                     or email_data["company"] == "UNKNOWN"
                 ):
                     print("⚠️ Skipping email with missing information")
+                    print()  # Add line break after each email
                     continue
 
             entry_key = f"{email_data['position']}_{email_data['company']}"
@@ -439,6 +455,7 @@ def process_emails(num_emails):
                 print(
                     f"ℹ️ Skipping duplicate: {email_data['position']} at {email_data['company']}"
                 )
+                print()  # Add line break after each email
                 continue
 
             existing_entries.add(entry_key)
@@ -450,9 +467,11 @@ def process_emails(num_emails):
             print(
                 f"✓ Added: {email_data['position']} at {email_data['company']} - Status: {email_data['status']} ({status_text})"
             )
+            print()  # Add line break after each email
 
         except Exception as e:
             logger.error(f"Error processing email {i + 1}: {str(e)}")
+            print()  # Add line break even after error
 
         time.sleep(API_RETRY_DELAY)
 
